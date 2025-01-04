@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criminal Record Management - Login</title>
+    <!-- Include Google Fonts for futuristic font -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto&display=swap" rel="stylesheet">
+    <!-- Include Tailwind CSS (optional, can be removed if not using Tailwind utilities) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrollbar during splash screen */
+            background: linear-gradient(135deg, #000428, #004e92, #061161); /* Initial dark blue gradient */
+            background-size: 400% 400%;
+            animation: bodyGradientAnimation 15s ease infinite; /* Animation to change gradients dynamically */
+            font-family: 'Roboto', sans-serif;
+        }
+
+        @keyframes bodyGradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Splash Screen Styles */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85); /* Semi-transparent dark overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow: hidden;
+            animation: splashFadeIn 0.5s forwards;
+        }
+
+        @keyframes splashFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #splash-screen h1 {
+            font-family: 'Orbitron', sans-serif; /* Futuristic font */
+            color: #00FFFF; /* Cyan color for high contrast */
+            font-size: 60px;
+            text-align: center;
+            animation: vaporize 1s 2s forwards; /* Vaporize over 1s after 2s delay */
+        }
+
+        @keyframes vaporize {
+            0% { opacity: 1; transform: translateY(0px) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
+        }
+
+        /* Fade out splash screen after vaporization */
+        #splash-screen.fade-out {
+            animation: fadeOut 1s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        /* Login Container Styles */
+        .login-container {
+            position: relative;
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out 3s forwards; /* Starts after splash screen vaporizes */
+            max-width: 400px;
+            width: 90%;
+            padding: 40px;
+            border-radius: 15px;
+            overflow: hidden;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.1); /* Semi-transparent background for glassmorphism */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); /* Frosted glass effect */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .login-container h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-family: 'Orbitron', sans-serif;
+            text-align: center; /* Center-align the "Login" text */
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); /* Subtle neon effect */
+        }
+
+        .input-group {
+            position: relative;
+            margin: 15px 0;
+            width: 100%;
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 12px 40px 12px 20px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #000000;
+            font-size: 16px;
+            outline: none;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .login-container input:focus {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 10px #00FFFF; /* Neon cyan glow on focus */
+        }
+
+        .login-container input::placeholder {
+            color: #000000;
+            opacity: 0.7;
+        }
+
+        .input-group .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #ffffff;
+            opacity: 0.7;
+            z-index: 3;
+            transition: opacity 0.3s ease;
+        }
+
+        .input-group .toggle-password:hover {
+            opacity: 1;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #00FFFF, #0080FF); /* Aquatic blue gradient */
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-container button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0px 0px 15px 5px rgba(0, 255, 255, 0.6); /* Neon glow on hover */
+        }
+
+        /* Styles for Tourist Button */
+        .tourist-button {
+            background: linear-gradient(45deg, #FFD700, #FFA500); /* Golden gradient */
+            margin-top: 10px;
+        }
+
+        .tourist-button:hover {
+            box-shadow: 0px 0px 15px 5px rgba(255, 215, 0, 0.6); /* Golden glow on hover */
+        }
+
+        .error {
+            color: #FF6347; /* Tomato color for errors */
+            text-align: center;
+            display: none;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        /* Center the login container */
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <h1>Criminal Record Management System</h1>
+    </div>
+
+    <div class="login-wrapper">
+        <div class="login-container">
+            <h2>Login</h2>
+            <div class="error" id="error">Invalid credentials. Please try again.</div>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Username" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Password" required>
+                <span class="toggle-password" onclick="togglePasswordVisibility()">
+                    <!-- Eye Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000000"
+                         viewBox="0 0 24 24" stroke="currentColor" width="24px" height="24px">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5
+                                 s8.268 2.943 9.542 7
+                                 c-1.274 4.057-5.065 7-9.542 7
+                                 s-8.268-2.943-9.542-7z" />
+                    </svg>
+                </span>
+            </div>
+            <button onclick="login()">Login</button>
+            <!-- Tourist Button -->
+            <button onclick="window.location.href='tourist.html'" class="tourist-button">Proceed as Tourist</button>
+        </div>
+    </div>
+
+    <!-- Credentials.js Library -->
+    <script src="credentials.js"></script> <!-- Link to credentials.js -->
+
+    <script>
+        // Function to fade out splash screen after vaporization
+        setTimeout(() => {
+            document.getElementById('splash-screen').classList.add('fade-out');
+        }, 3000); // 2s display + 1s vaporization = 3s total
+
+        // Function to toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('.toggle-password svg');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M13.875 18.825A10.05 10.05 0 0112 19
+                             c-4.478 0-8.268-2.943-9.542-7
+                             a9.965 9.965 0 012.213-3.592
+                             m1.572-1.572A9.973 9.973 0 0112 5
+                             c4.478 0 8.268 2.943 9.542 7
+                             a9.973 9.973 0 01-1.512 2.998
+                             M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 3l18 18" />
+                `;
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5
+                             s8.268 2.943 9.542 7
+                             c-1.274 4.057-5.065 7-9.542 7
+                             s-8.268-2.943-9.542-7z" />
+                `;
+            }
+        }
+
+        // Login function that checks credentials and redirects
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('error');
+            let authenticated = false;
+
+            // First, check credentials.js
+            for (let role in credentials) {
+                if (credentials[role].username === username && credentials[role].password === password) {
+                    authenticated = true;
+                    // Redirect based on role's redirect page
+                    window.location.href = credentials[role].redirect;
+                    break;
+                }
+            }
+
+            if (!authenticated) {
+                // If not authenticated via credentials.js, try server authentication
+                fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Invalid credentials');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Redirect to the URL provided by the server
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        throw new Error('Invalid role or redirect URL.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during login:', error);
+                    errorDiv.style.display = 'block';
+                });
+            }
+        }
+    </script>
+</body>
+</html>

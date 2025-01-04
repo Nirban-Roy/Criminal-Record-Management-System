@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Existing head content -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBI Officer View Dashboard</title>
+    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-dark: #1c1c28;
+            --secondary-dark: #2a2a38;
+            --accent-dark: linear-gradient(45deg, #00ff87, #00b7ff);
+            --background-dark: linear-gradient(135deg, #141421, #20202e);
+            --sidebar-dark: linear-gradient(135deg, #2a2a38, #1c1c28);
+            --content-dark: linear-gradient(135deg, #242434, #30303f);
+            --message-bg-dark: linear-gradient(135deg, #30303f, #33334d);
+            --input-bg-dark: #1c1c28;
+            --input-border: rgba(0, 255, 135, 0.7);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: var(--background-dark);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background: var(--sidebar-dark);
+            transition: width 0.3s ease;
+            overflow: hidden;
+            z-index: 20;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.3s, padding 0.3s;
+        }
+
+        .sidebar.collapsed a {
+            justify-content: center;
+            padding: 15px 10px;
+        }
+
+        .sidebar a:hover {
+            background: rgba(0, 255, 135, 0.1);
+        }
+
+        .sidebar a.active {
+            background: var(--accent-dark);
+        }
+
+        .sidebar a svg {
+            margin-right: 15px;
+            transition: margin 0.3s;
+            fill: #fff; /* Ensure SVGs are visible */
+        }
+
+        .sidebar.collapsed a svg {
+            margin-right: 0;
+        }
+
+        .sidebar.collapsed a .menu-text {
+            display: none;
+        }
+
+        /* Move the menu icon inside the sidebar */
+        .menu-icon {
+            position: absolute;
+            left: 10px;
+            top: 20px;
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar.collapsed .menu-icon {
+            transform: rotate(180deg); /* Optional: Rotate icon when collapsed */
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: var(--background-dark);
+            padding: 1rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            height: 60px;
+            transition: left 0.3s ease;
+            z-index: 10;
+        }
+
+        .sidebar.collapsed ~ .navbar {
+            left: 80px;
+        }
+
+        /* Content Styles */
+        .content {
+            margin-left: 250px;
+            padding: 80px 20px 20px 20px; /* Adjusted top padding to account for fixed navbar */
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar.collapsed ~ .content {
+            margin-left: 80px;
+        }
+
+        /* Form Styles */
+        .form-container {
+            background-color: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-container h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #00ff87;
+            text-align: center;
+        }
+
+        .form-container label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .form-container input, .form-container select, .form-container textarea {
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            background-color: var(--input-bg-dark);
+            color: white;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-container input:focus, .form-container select:focus, .form-container textarea:focus {
+            outline: none;
+            border-color: #00ff87;
+            box-shadow: 0px 0px 10px rgba(0, 255, 135, 0.6);
+        }
+
+        .form-container input[disabled], .form-container select[disabled], .form-container textarea[disabled] {
+            background-color: #2a2a38;
+            cursor: not-allowed;
+        }
+
+        .form-container input[type="submit"], .form-container button {
+            background: var(--accent-dark);
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background 0.3s ease;
+            width: 100%;
+        }
+
+        .form-container input[type="submit"]:hover, .form-container button:hover {
+            background: rgba(0, 183, 255, 0.8);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        table th {
+            background: var(--accent-dark);
+            color: white;
+            text-transform: uppercase;
+            padding: 12px 15px;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid rgba(0, 255, 135, 0.7);
+        }
+
+        table th:hover {
+            background: rgba(0, 255, 135, 0.3);
+            cursor: pointer;
+        }
+
+        table td {
+            padding: 12px 15px;
+            color: #fff;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        table tr:hover td {
+            background: rgba(0, 255, 135, 0.05);
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #00ff87;
+            text-align: center;
+        }
+
+        .modal-content .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .modal-content .report-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-content .report-section h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #00b7ff;
+        }
+
+        .modal-content .report-section p {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        /* Messaging Modal Styles */
+        .message-modal-content {
+            background: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+        }
+
+        .message-modal-content h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #00ff87;
+            text-align: center;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar.collapsed {
+                width: 0;
+            }
+
+            .navbar {
+                left: 80px;
+            }
+
+            .sidebar.collapsed ~ .navbar {
+                left: 0;
+            }
+
+            .content {
+                margin-left: 80px;
+            }
+
+            .sidebar.collapsed ~ .content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="menu-icon" onclick="toggleSidebar()" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+            <!-- Simple SVG Icon for Menu Toggle -->
+            <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <!-- Default Icon: Hamburger Menu -->
+                <path id="menuPath" d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <div class="flex flex-col mt-20">
+            <a href="#" id="view-criminals-link" onclick="showContent('view-criminals')" class="active">
+                <!-- Inline SVG Icon for View Criminals -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="8"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span class="menu-text">View Criminals</span>
+            </a>
+            <a href="#" id="view-cases-link" onclick="showContent('view-cases')">
+                <!-- Inline SVG Icon for View Cases -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- File Icon -->
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path>
+                    <path d="M14 2v6h6"></path>
+                </svg>
+                <span class="menu-text">View Cases</span>
+            </a>
+            <a href="#" id="view-evidence-link" onclick="showContent('view-evidence')">
+                <!-- Inline SVG Icon for View Evidence -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <!-- Eye Icon -->
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <span class="menu-text">View Evidence</span>
+            </a>
+            <!-- Removed Send Message Link -->
+            <!-- Removed Profile Settings Link -->
+            <a href="index.html" class="mt-auto" onclick="logout()">
+                <!-- Inline SVG Icon for Logout -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 16l4-4m0 0l-4-4m4 4H7
+                             m6 4v1a3 3 0 01-3 3H5
+                             a3 3 0 01-3-3V7
+                             a3 3 0 013-3h5
+                             a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="menu-text">Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <!-- You can add additional navbar content here if needed -->
+    </div>
+
+    <!-- Content Area -->
+    <div class="content" id="content">
+        <!-- View Criminals Section -->
+        <div class="form-container" id="view-criminals">
+            <h1 class="text-2xl mb-4 text-green-400">View Criminals</h1>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Criminal ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Nationality</th>
+                            <th>Jail Name</th>
+                        </tr>
+                    </thead>
+                    <tbody id="criminals-table-body">
+                        <!-- Dynamic criminal data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- View Cases Section -->
+        <div class="form-container hidden" id="view-cases">
+            <h1 class="text-2xl mb-4 text-green-400">View Cases</h1>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Case ID</th>
+                            <th>Case Name</th>
+                            <th>Description</th>
+                            <th>Filed By</th>
+                            <th>Date Filed</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cases-table-body">
+                        <!-- Dynamic case data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- View Evidence Section -->
+        <div class="form-container hidden" id="view-evidence">
+            <h1 class="text-2xl mb-4 text-green-400">View Evidence</h1>
+            <div class="table-container">
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Evidence ID</th>
+                            <th>Case ID</th>
+                            <th>Description</th>
+                            <th>File</th>
+                            <th>Date Added</th>
+                        </tr>
+                    </thead>
+                    <tbody id="evidence-table-body">
+                        <!-- Dynamic evidence data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Send Message Section (Removed) -->
+
+    </div>
+
+    <!-- Modal for Viewing Detailed Information (Optional) -->
+    <div class="modal" id="detailed-info-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeDetailedInfoModal()">X</button>
+            <h2>Detailed Information</h2>
+            <!-- Detailed information will be inserted here -->
+            <div id="detailed-info-content">
+                <!-- Dynamic content -->
+            </div>
+            <button class="back-btn mt-4" onclick="closeDetailedInfoModal()">Back</button>
+        </div>
+    </div>
+
+    <!-- Removed Messaging Modal -->
+
+    <!-- JavaScript -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const links = document.querySelectorAll('.sidebar a');
+
+        // Sidebar Toggle Logic
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+
+            // Toggle between hamburger and close icon
+            if (sidebar.classList.contains('collapsed')) {
+                // Change to Close (X) Icon
+                toggleIcon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                `;
+            } else {
+                // Change to Hamburger Menu Icon
+                toggleIcon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                `;
+            }
+        }
+
+        // Function to remove active class from all links
+        function removeActiveClasses() {
+            links.forEach(link => {
+                link.classList.remove('active');
+            });
+        }
+
+        // Show Content Functionality
+        function showContent(section) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content > div');
+            sections.forEach(sec => {
+                sec.classList.add('hidden');
+            });
+
+            // Remove active class from all links
+            removeActiveClasses();
+
+            // Show the selected section
+            const activeSection = document.getElementById(section);
+            if (activeSection) {
+                activeSection.classList.remove('hidden');
+                document.getElementById(`${section}-link`).classList.add('active');
+            }
+
+            // Reset any modals or perform other actions if needed
+        }
+
+        // Initialize by showing the View Criminals section
+        document.addEventListener('DOMContentLoaded', () => {
+            showContent('view-criminals');
+            loadCriminals();
+            loadCases();
+            loadEvidence();
+        });
+
+        // Functions to Load Data
+        function loadCriminals() {
+            fetch('/api/view-criminals')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('criminals-table-body');
+                    tbody.innerHTML = '';
+
+                    if (data.results.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No criminals found.</td></tr>';
+                    } else {
+                        data.results.forEach(criminal => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${criminal.criminal_id}</td>
+                                <td>${criminal.name}</td>
+                                <td>${criminal.age}</td>
+                                <td>${criminal.gender}</td>
+                                <td>${criminal.nationality}</td>
+                                <td>${criminal.jail_name || 'N/A'}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while loading criminal data.');
+                });
+        }
+
+        function loadCases() {
+            fetch('/api/view-cases')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('cases-table-body');
+                    tbody.innerHTML = '';
+
+                    if (data.results.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No cases found.</td></tr>';
+                    } else {
+                        data.results.forEach(caseItem => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${caseItem.case_id}</td>
+                                <td>${caseItem.case_name}</td>
+                                <td>${caseItem.description}</td>
+                                <td>${caseItem.filed_by}</td>
+                                <td>${new Date(caseItem.date_filed).toLocaleDateString()}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while loading case data.');
+                });
+        }
+
+        function loadEvidence() {
+            fetch('/api/view-evidence')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('evidence-table-body');
+                    tbody.innerHTML = '';
+
+                    if (data.results.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No evidence found.</td></tr>';
+                    } else {
+                        data.results.forEach(evidence => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${evidence.evidence_id}</td>
+                                <td>${evidence.case_id}</td>
+                                <td>${evidence.description}</td>
+                                <td><a href="${evidence.file_url}" target="_blank" class="text-blue-400 underline">View File</a></td>
+                                <td>${new Date(evidence.date_added).toLocaleDateString()}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while loading evidence data.');
+                });
+        }
+
+        // Detailed Info Modal Functions (Optional)
+        function openDetailedInfoModal(info) {
+            const modal = document.getElementById('detailed-info-modal');
+            const content = document.getElementById('detailed-info-content');
+            content.innerHTML = info; // Assume 'info' is HTML content
+            modal.classList.add('active');
+        }
+
+        function closeDetailedInfoModal() {
+            const modal = document.getElementById('detailed-info-modal');
+            modal.classList.remove('active');
+            document.getElementById('detailed-info-content').innerHTML = '';
+        }
+
+        // Logout Function
+        function logout() {
+            // For now, simply reload the page or redirect to login
+            alert('You have been logged out.');
+            window.location.href = 'index.html'; // Change to login page if available
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Head Content -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-dark: #1c1c28;
+            --secondary-dark: #2a2a38;
+            --accent-dark: linear-gradient(45deg, #00ff87, #00b7ff);
+            --background-dark: linear-gradient(135deg, #141421, #20202e);
+            --sidebar-dark: linear-gradient(135deg, #2a2a38, #1c1c28);
+            --content-dark: linear-gradient(135deg, #242434, #30303f);
+            --message-bg-dark: linear-gradient(135deg, #30303f, #33334d);
+            --input-bg-dark: #1c1c28;
+            --input-border: rgba(0, 255, 135, 0.7);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: var(--background-dark);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background: var(--sidebar-dark);
+            transition: width 0.3s ease;
+            overflow: hidden;
+            z-index: 20;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.3s, padding 0.3s;
+        }
+
+        .sidebar.collapsed a {
+            justify-content: center;
+            padding: 15px 10px;
+        }
+
+        .sidebar a:hover {
+            background: rgba(0, 255, 135, 0.1);
+        }
+
+        .sidebar a.active {
+            background: var(--accent-dark);
+        }
+
+        .sidebar a svg {
+            margin-right: 15px;
+            transition: margin 0.3s;
+            fill: #fff;
+        }
+
+        .sidebar.collapsed a svg {
+            margin-right: 0;
+        }
+
+        .sidebar.collapsed a .menu-text {
+            display: none;
+        }
+
+        /* Menu Icon */
+        .menu-icon {
+            position: absolute;
+            left: 10px;
+            top: 20px;
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar.collapsed .menu-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: var(--background-dark);
+            padding: 1rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            height: 60px;
+            transition: left 0.3s ease;
+            z-index: 10;
+        }
+
+        .sidebar.collapsed ~ .navbar {
+            left: 80px;
+        }
+
+        /* Content Styles */
+        .content {
+            margin-left: 250px;
+            padding: 80px 20px 20px 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar.collapsed ~ .content {
+            margin-left: 80px;
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        table th {
+            background: var(--accent-dark);
+            color: white;
+            text-transform: uppercase;
+            padding: 12px 15px;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid rgba(0, 255, 135, 0.7);
+        }
+
+        table th:hover {
+            background: rgba(0, 255, 135, 0.3);
+            cursor: pointer;
+        }
+
+        table td {
+            padding: 12px 15px;
+            color: #fff;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        table tr:hover td {
+            background: rgba(0, 255, 135, 0.05);
+        }
+
+        /* Button Styles */
+        .action-btn {
+            background: #00ff87;
+            color: #000;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .action-btn:hover {
+            background: #00b75f;
+        }
+
+        .action-btn.bg-red-500 {
+            background: #ff4d4d;
+        }
+
+        .action-btn.bg-red-500:hover {
+            background: #ff1a1a;
+        }
+
+        /* Form Styles */
+        .form-container {
+            background-color: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-container h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #00ff87;
+            text-align: center;
+        }
+
+        .form-container label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .form-container input, .form-container select, .form-container textarea {
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            background-color: var(--input-bg-dark);
+            color: white;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-container input:focus, .form-container select:focus, .form-container textarea:focus {
+            outline: none;
+            border-color: #00ff87;
+            box-shadow: 0px 0px 10px rgba(0, 255, 135, 0.6);
+        }
+
+        .form-container input[type="submit"] {
+            background: var(--accent-dark);
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background 0.3s ease;
+            width: 100%;
+        }
+
+        .form-container input[type="submit"]:hover {
+            background: rgba(0, 183, 255, 0.8);
+        }
+
+        /* User Table Styles */
+        .user-table th, .user-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .user-table th {
+            background: var(--accent-dark);
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid rgba(0, 255, 135, 0.7);
+        }
+
+        .user-table td {
+            color: #fff;
+        }
+
+        .user-form input[type="text"], .user-form input[type="password"] {
+            width: calc(50% - 10px);
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .user-form input[type="submit"] {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar.collapsed {
+                width: 0;
+            }
+
+            .navbar {
+                left: 80px;
+            }
+
+            .sidebar.collapsed ~ .navbar {
+                left: 0;
+            }
+
+            .content {
+                margin-left: 80px;
+            }
+
+            .sidebar.collapsed ~ .content {
+                margin-left: 0;
+            }
+
+            .user-form input[type="text"], .user-form input[type="password"] {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="menu-icon" onclick="toggleSidebar()" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+            <!-- Menu Icon -->
+            <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path id="menuPath" d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <div class="flex flex-col mt-20">
+            <!-- Manage Users Link -->
+            <a href="#" id="manage-users-link" onclick="showContent('manage-users')" class="active">
+                <!-- Icon for Manage Users -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                    <path d="M20 8v6M23 11h-6"></path>
+                </svg>
+                <span class="menu-text">Manage Users</span>
+            </a>
+
+            <!-- Logout -->
+            <a href="index.html" class="mt-auto">
+                <!-- Icon for Logout -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H5a3 3 0 01-3-3V7a3 3 0 013-3h5a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="menu-text">Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <!-- Navbar content can be added here -->
+    </div>
+
+    <!-- Content Area -->
+    <div class="content" id="content">
+        <!-- Manage Users Section -->
+        <div class="form-container" id="manage-users">
+            <h1 class="text-2xl mb-4 text-green-400">Manage Users</h1>
+
+            <!-- User Creation Form -->
+            <form class="user-form" onsubmit="createUser(event)">
+                <h2 class="text-xl mb-2">Create New User</h2>
+                <input type="text" id="new-username" name="new-username" required placeholder="Username">
+                <input type="password" id="new-password" name="new-password" required placeholder="Password">
+                <select id="new-user-role" name="new-user-role" required>
+                    <option value="">Select Role</option>
+                    <option value="police_view">Police View</option>
+                    <option value="jailsuperintendent_view">Jail Superintendent View</option>
+                    <option value="judge_view">Judge View</option>
+                    <option value="cbi_view">CBI View</option>
+                </select>
+                <input type="submit" value="Create User">
+            </form>
+
+            <!-- Users Table -->
+            <div class="table-container mt-6">
+                <h2 class="text-xl mb-2">Existing Users</h2>
+                <table class="w-full user-table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Dynamic user data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Sidebar Toggle Logic
+        const sidebar = document.getElementById('sidebar');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const links = document.querySelectorAll('.sidebar a');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+
+            // Toggle between hamburger and close icon
+            if (sidebar.classList.contains('collapsed')) {
+                // Change to Close (X) Icon
+                toggleIcon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                `;
+            } else {
+                // Change to Hamburger Menu Icon
+                toggleIcon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                `;
+            }
+        }
+
+        // Function to remove active class from all links
+        function removeActiveClasses() {
+            links.forEach(link => {
+                link.classList.remove('active');
+            });
+        }
+
+        // Show Content Functionality
+        function showContent(section) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content > div');
+            sections.forEach(sec => {
+                sec.classList.add('hidden');
+            });
+
+            // Remove active class from all links
+            removeActiveClasses();
+
+            // Show the selected section
+            const activeSection = document.getElementById(section);
+            if (activeSection) {
+                activeSection.classList.remove('hidden');
+                document.getElementById(`${section}-link`).classList.add('active');
+
+                // Load users if needed
+                if (section === 'manage-users') {
+                    loadUsers();
+                }
+            }
+        }
+
+        // Manage Users Functions
+        function loadUsers() {
+            fetch('/api/users')
+                .then(response => response.json())
+                .then(data => {
+                    const usersTableBody = document.getElementById('users-table-body');
+                    usersTableBody.innerHTML = '';
+
+                    data.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user.user_id}</td>
+                            <td>${user.username}</td>
+                            <td>${user.role}</td>
+                            <td>
+                                <button class="action-btn bg-red-500" onclick="deleteUser(${user.user_id})">Delete</button>
+                            </td>
+                        `;
+                        usersTableBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching users:', error);
+                    alert('An error occurred while loading users.');
+                });
+        }
+
+        function createUser(event) {
+            event.preventDefault();
+            const username = document.getElementById('new-username').value.trim();
+            const password = document.getElementById('new-password').value.trim();
+            const role = document.getElementById('new-user-role').value;
+
+            if (!username || !password || !role) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, role })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                alert('User created successfully.');
+                document.querySelector('.user-form').reset();
+                loadUsers();
+            })
+            .catch(error => {
+                console.error('Error creating user:', error);
+                alert('An error occurred while creating the user.');
+            });
+        }
+
+        function deleteUser(userId) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
+
+            fetch(`/api/users/${userId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                alert('User deleted successfully.');
+                loadUsers();
+            })
+            .catch(error => {
+                console.error('Error deleting user:', error);
+                alert('An error occurred while deleting the user.');
+            });
+        }
+
+        // Initialize by showing the Manage Users section
+        document.addEventListener('DOMContentLoaded', () => {
+            showContent('manage-users');
+        });
+    </script>
+</body>
+</html>

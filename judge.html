@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Judge Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Removed FontAwesome Script -->
+<style>
+    :root {
+        --primary-dark: #1c1c28;
+        --secondary-dark: #2a2a38;
+        --accent-dark: linear-gradient(45deg, #00ff87, #00b7ff);
+        --background-dark: linear-gradient(135deg, #141421, #20202e);
+        --sidebar-dark: linear-gradient(135deg, #2a2a38, #1c1c28);
+        --content-dark: linear-gradient(135deg, #242434, #30303f);
+        --message-bg-dark: linear-gradient(135deg, #30303f, #33334d);
+        --input-bg-dark: #1c1c28;
+        --input-border: rgba(0, 255, 135, 0.7);
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        background: var(--background-dark);
+        color: #fff;
+        overflow-x: hidden;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 250px;
+        background: var(--sidebar-dark);
+        transition: width 0.3s ease;
+        overflow: hidden;
+        z-index: 20;
+    }
+
+    .sidebar.collapsed {
+        width: 80px;
+    }
+
+    .sidebar a {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        color: #fff;
+        text-decoration: none;
+        transition: background 0.3s, padding 0.3s;
+    }
+
+    .sidebar.collapsed a {
+        justify-content: center;
+        padding: 15px 10px;
+    }
+
+    .sidebar a:hover {
+        background: rgba(0, 255, 135, 0.1);
+    }
+
+    .sidebar a.active {
+        background: var(--accent-dark);
+    }
+
+    .sidebar a svg {
+        margin-right: 15px;
+        transition: margin 0.3s;
+        fill: #fff; /* Ensure SVGs are visible */
+    }
+
+    .sidebar.collapsed a svg {
+        margin-right: 0;
+    }
+
+    .sidebar.collapsed a .menu-text {
+        display: none;
+    }
+
+    /* Move the menu icon inside the sidebar */
+    .menu-icon {
+        position: absolute;
+        left: 10px;
+        top: 20px;
+        cursor: pointer;
+        color: white;
+        font-size: 24px;
+        transition: transform 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar.collapsed .menu-icon {
+        transform: rotate(180deg); /* Optional: Rotate icon when collapsed */
+    }
+
+    /* Navbar Styles */
+    .navbar {
+        background-color: var(--background-dark);
+        padding: 1rem;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 250px;
+        right: 0;
+        height: 60px;
+        transition: left 0.3s ease;
+        z-index: 10;
+    }
+
+    .sidebar.collapsed ~ .navbar {
+        left: 80px;
+    }
+
+    /* Search Bar Styling within View Cases */
+    .search-container {
+        display: flex;
+        align-items: center;
+        background-color: var(--input-bg-dark);
+        padding: 5px 10px;
+        border-radius: 5px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .search-icon {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 18px;
+        margin-right: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .search-box {
+        flex: 1;
+        background-color: var(--input-bg-dark);
+        border: none;
+        outline: none;
+        padding: 5px 10px;
+        color: #fff;
+        font-size: 16px;
+        border-radius: 5px;
+        transition: width 0.3s ease;
+    }
+
+    .search-box.hidden {
+        display: none;
+    }
+
+    /* Content Styles */
+    .content {
+        margin-left: 250px;
+        padding: 20px;
+        transition: margin-left 0.3s ease;
+    }
+
+    .sidebar.collapsed ~ .content {
+        margin-left: 80px;
+    }
+
+    /* Table Styles */
+    .table-container {
+        background: var(--content-dark);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px;
+    }
+
+    table th {
+        background: var(--accent-dark);
+        color: white;
+        text-transform: uppercase;
+        padding: 12px 15px;
+        font-size: 14px;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid rgba(0, 255, 135, 0.7);
+    }
+
+    table th:hover {
+        background: rgba(0, 255, 135, 0.3);
+        cursor: pointer;
+    }
+
+    table td {
+        padding: 12px 15px;
+        color: #fff;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    table tr:hover td {
+        background: rgba(0, 255, 135, 0.05);
+    }
+
+    /* Form Styles */
+    .form-container {
+        background-color: var(--content-dark);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .form-container h1 {
+        font-size: 24px;
+        margin-bottom: 15px;
+        color: #00ff87;
+        text-align: center;
+    }
+
+    .form-container label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .form-container input {
+        width: 100%;
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        border: 1px solid var(--input-border);
+        border-radius: 5px;
+        background-color: var(--input-bg-dark);
+        color: white;
+        font-size: 16px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .form-container input:focus {
+        outline: none;
+        border-color: #00ff87;
+        box-shadow: 0px 0px 10px rgba(0, 255, 135, 0.6);
+    }
+
+    .form-container input[type="submit"] {
+        background: var(--accent-dark);
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: background 0.3s ease;
+        width: 100%;
+    }
+
+    .form-container input[type="submit"]:hover {
+        background: rgba(0, 183, 255, 0.8);
+    }
+
+    /* Chatbot Styles */
+    .chatbot-container {
+        background: var(--background-dark);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+        max-width: 800px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        height: 500px;
+        position: relative;
+    }
+
+    .chatbot-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .chatbot-header h1 {
+        font-size: 24px;
+        color: #00ff87;
+    }
+
+    .chatbot-header button {
+        background: var(--accent-dark);
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .chatbot-header button:hover {
+        background: rgba(0, 183, 255, 0.8);
+    }
+
+    .chat-messages {
+        flex: 1;
+        background-color: var(--message-bg-dark);
+        border-radius: 10px;
+        padding: 15px;
+        overflow-y: auto;
+        margin-bottom: 15px;
+    }
+
+    .user-message {
+        text-align: right;
+    }
+
+    .bot-message {
+        text-align: left;
+    }
+
+    .chat-input {
+        display: flex;
+        position: relative;
+    }
+
+    .chat-input input {
+        flex: 1;
+        padding: 12px 15px;
+        padding-right: 60px; /* Ensure space for the send button */
+        background: var(--input-bg-dark);
+        border: 1px solid var(--input-border);
+        color: white;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .chat-input input::placeholder {
+        color: #aaa;
+    }
+
+    .chat-input input:focus {
+        outline: none;
+        border-color: #00ff87;
+        box-shadow: 0px 0px 10px rgba(0, 255, 135, 0.6);
+    }
+
+    /* Send Button */
+    .send-button {
+        background: var(--accent-dark);
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 100%;
+        width: 50px;
+    }
+
+    .send-button svg {
+        fill: white;
+        width: 20px;
+        height: 20px;
+    }
+
+    .send-button:hover {
+        background: rgba(0, 183, 255, 0.8);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 80px;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+        }
+
+        .navbar {
+            left: 80px;
+        }
+
+        .sidebar.collapsed ~ .navbar {
+            left: 0;
+        }
+
+        .search-container {
+            margin-left: 80px;
+        }
+
+        .sidebar.collapsed ~ .search-container {
+            margin-left: 0;
+        }
+
+        .content {
+            margin-left: 80px;
+        }
+
+        .sidebar.collapsed ~ .content {
+            margin-left: 0;
+        }
+    }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="menu-icon" onclick="toggleSidebar()" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+        <!-- Simple SVG Icon for Menu Toggle -->
+        <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <!-- Default Icon: Hamburger Menu -->
+            <path id="menuPath" d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </div>
+    <div class="flex flex-col mt-20">
+        <a href="#" id="view-cases-link" onclick="showContent('view-cases')" class="active">
+            <!-- Inline SVG Icon for View Cases -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect>
+                <path d="M8 2v20"></path>
+            </svg>
+            <span class="menu-text">View Cases</span>
+        </a>
+        <a href="#" id="schedule-hearings-link" onclick="showContent('schedule-hearings')">
+            <!-- Inline SVG Icon for Schedule Hearings -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span class="menu-text">Schedule Hearings</span>
+        </a>
+        <a href="#" id="profile-settings-link" onclick="showContent('profile-settings')">
+            <!-- Inline SVG Icon for Profile Settings -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="7" r="4"></circle>
+                <path d="M5.5 21h13a2 2 0 002-2v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1a2 2 0 002 2z"></path>
+            </svg>
+            <span class="menu-text">Profile Settings</span>
+        </a>
+        <a href="#" id="chatbot-link" onclick="showContent('chatbot')">
+            <!-- Inline SVG Icon for Chatbot -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h12a2 2 0 012 2z"></path>
+            </svg>
+            <span class="menu-text">Chatbot</span>
+        </a>
+        <a href="index.html" class="mt-auto">
+            <!-- Inline SVG Icon for Logout -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H5a3 3 0 01-3-3V7a3 3 0 013-3h5a3 3 0 013 3v1"></path>
+            </svg>
+            <span class="menu-text">Logout</span>
+        </a>
+    </div>
+</div>
+
+<!-- Navbar -->
+<div class="navbar">
+    <!-- You can add additional navbar content here if needed -->
+</div>
+
+<!-- Content Area -->
+<div class="content" id="content">
+    <!-- View Cases Table -->
+    <div class="table-container" id="view-cases">
+        <h1 class="text-2xl mb-4 text-green-400">View Cases</h1>
+        <!-- Localized Search Bar -->
+        <div class="search-container mb-4">
+            <button class="search-icon" onclick="toggleSearch()" title="Search" aria-label="Search">
+                <!-- Inline SVG Icon for Search -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="8" cy="8" r="7"></circle>
+                    <line x1="14" y1="14" x2="20" y2="20"></line>
+                </svg>
+            </button>
+            <input type="text" id="searchInput" class="search-box hidden" placeholder="Search cases...">
+        </div>
+        <table id="cases-table" class="w-full">
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Case Name</th>
+                    <th>Judge</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Example Data Rows -->
+                <tr>
+                    <td>001</td>
+                    <td>State vs. Johnson</td>
+                    <td>Judge Brown</td>
+                    <td>2024-05-12</td>
+                </tr>
+                <tr>
+                    <td>002</td>
+                    <td>People vs. Smith</td>
+                    <td>Judge Green</td>
+                    <td>2024-06-15</td>
+                </tr>
+                <!-- Dynamic rows will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Schedule Hearings Form -->
+    <div class="form-container hidden" id="schedule-hearings">
+        <h1 class="text-2xl mb-4 text-green-400">Schedule Hearings</h1>
+        <form onsubmit="scheduleHearing(event)">
+            <label for="case-id">Case ID:</label>
+            <input type="text" id="case-id" name="case-id" required placeholder="Enter Case ID">
+
+            <label for="case-name">Case Name:</label>
+            <input type="text" id="case-name" name="case-name" required placeholder="Enter Case Name">
+
+            <label for="hearing-date">Hearing Date:</label>
+            <input type="date" id="hearing-date" name="hearing-date" required>
+
+            <label for="judge-name">Judge:</label>
+            <input type="text" id="judge-name" name="judge-name" required placeholder="Enter Judge's Name">
+
+            <input type="submit" value="Schedule Hearing">
+        </form>
+    </div>
+
+    <!-- Profile Settings -->
+    <div class="form-container hidden" id="profile-settings">
+        <h1 class="text-2xl mb-4 text-green-400">Profile Settings</h1>
+        <form onsubmit="updateCredentials(event)">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required placeholder="Enter new username">
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required placeholder="Enter new password">
+
+            <input type="submit" value="Update Credentials">
+        </form>
+    </div>
+
+    <!-- Chatbot Container -->
+    <div class="chatbot-container hidden" id="chatbot">
+        <div class="chatbot-header">
+            <h1 class="text-2xl text-green-400">Chatbot</h1>
+            <button onclick="createNewChat()" title="Start New Chat" aria-label="Start New Chat">
+                <!-- Inline SVG Icon for New Chat -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Type your message..." onkeypress="handleKeyPress(event)" />
+            <!-- Send Button with Inline SVG -->
+            <button class="send-button" onclick="sendMessage()" aria-label="Send Message">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="2" y1="10" x2="18" y2="10"></line>
+                    <polyline points="14 6 18 10 14 14"></polyline>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    // Function to escape HTML to prevent XSS
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, function(tag) {
+            const charsToReplace = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            };
+            return charsToReplace[tag] || tag;
+        });
+    }
+
+    // Sidebar Toggle Logic
+    const sidebar = document.getElementById('sidebar');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const viewCases = document.getElementById('view-cases');
+    const scheduleHearings = document.getElementById('schedule-hearings');
+    const profileSettings = document.getElementById('profile-settings');
+    const chatbot = document.getElementById('chatbot');
+
+    const links = document.querySelectorAll('.sidebar a');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('collapsed');
+
+        // Toggle between hamburger and close icon
+        if (sidebar.classList.contains('collapsed')) {
+            // Change to Close (X) Icon
+            toggleIcon.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                    <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            `;
+        } else {
+            // Change to Hamburger Menu Icon
+            toggleIcon.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            `;
+        }
+    }
+
+    // Function to remove active class from all links
+    function removeActiveClasses() {
+        links.forEach(link => {
+            link.classList.remove('active');
+        });
+    }
+
+    // Chat Session Management (Using Local Storage)
+    let chatSession = JSON.parse(localStorage.getItem('chatSession')) || {
+        messages: []
+    };
+
+    function saveChatSession() {
+        localStorage.setItem('chatSession', JSON.stringify(chatSession));
+    }
+
+    // Show Content Functionality
+    function showContent(section) {
+        // Hide all sections
+        viewCases.classList.add('hidden');
+        scheduleHearings.classList.add('hidden');
+        profileSettings.classList.add('hidden');
+        chatbot.classList.add('hidden');
+
+        // Remove active class from all links
+        removeActiveClasses();
+
+        // Show the selected section
+        switch(section) {
+            case 'view-cases':
+                viewCases.classList.remove('hidden');
+                document.getElementById('view-cases-link').classList.add('active');
+                fetchCases(); // Fetch cases when View Cases is shown
+                break;
+            case 'schedule-hearings':
+                scheduleHearings.classList.remove('hidden');
+                document.getElementById('schedule-hearings-link').classList.add('active');
+                break;
+            case 'profile-settings':
+                profileSettings.classList.remove('hidden');
+                document.getElementById('profile-settings-link').classList.add('active');
+                break;
+            case 'chatbot':
+                chatbot.classList.remove('hidden');
+                document.getElementById('chatbot-link').classList.add('active');
+                break;
+            default:
+                viewCases.classList.remove('hidden');
+                document.getElementById('view-cases-link').classList.add('active');
+                fetchCases();
+        }
+
+        // Reset chat input when the chatbot is shown
+        if (section === 'chatbot') {
+            document.getElementById('chat-input').value = '';
+            // Optionally, you can load previous chat history here if needed
+        }
+    }
+
+
+    // Function to create a new chat session
+    function createNewChat() {
+        if (confirm('Are you sure you want to start a new chat? This will clear the current conversation.')) {
+            chatSession = {
+                messages: []
+            };
+            saveChatSession();
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = '<div class="bot-message mb-2"><strong>Bot:</strong> New chat session started.</div>';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    // Function to send a message
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        if (message) {
+            const messageContainer = document.getElementById('chat-messages');
+
+            // Display the user's message
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('user-message', 'mb-2');
+            userMessage.innerHTML = `<strong>You:</strong> ${escapeHTML(message)}`;
+            messageContainer.appendChild(userMessage);
+
+            // Update chat session
+            chatSession.messages.push({ sender: 'user', text: message });
+            saveChatSession();
+
+            input.value = '';
+
+            // Scroll to the bottom
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+
+            try {
+                // Show a loading indicator
+                const loadingMessage = document.createElement('div');
+                loadingMessage.classList.add('bot-message', 'mb-2');
+                loadingMessage.innerHTML = `<strong>Bot:</strong> <em>Loading...</em>`;
+                messageContainer.appendChild(loadingMessage);
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+
+                // Send the message to the new backend endpoint
+                const response = await fetch('/get-groq-completion', { // Updated endpoint
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }), // Simplified payload
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const botReply = data.content; // Extract 'content' from response
+
+                // Remove the loading indicator
+                messageContainer.removeChild(loadingMessage);
+
+                // Display the bot's reply
+                const botMessage = document.createElement('div');
+                botMessage.classList.add('bot-message', 'mb-2');
+                botMessage.innerHTML = `<strong>Bot:</strong> ${escapeHTML(botReply)}`;
+                messageContainer.appendChild(botMessage);
+
+                // Update chat session
+                chatSession.messages.push({ sender: 'bot', text: botReply });
+                saveChatSession();
+
+                // Scroll to the bottom
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            } catch (error) {
+                console.error('Error:', error);
+                // Remove the loading indicator if present
+                const loading = messageContainer.querySelector('.bot-message em');
+                if (loading) {
+                    loading.parentElement.innerHTML = `<strong>Bot:</strong> Sorry, I couldn't process your request at the moment. Please try again later.`;
+                } else {
+                    const errorMessage = document.createElement('div');
+                    errorMessage.classList.add('bot-message', 'mb-2');
+                    errorMessage.innerHTML = `<strong>Bot:</strong> Sorry, I couldn't process your request at the moment. Please try again later.`;
+                    messageContainer.appendChild(errorMessage);
+                }
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }
+        }
+    }
+
+
+    // Handle Enter key press in chat input
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            sendMessage();
+        }
+    }
+
+    // Toggle Search Box Visibility
+    function toggleSearch() {
+        const searchBox = document.getElementById('searchInput');
+        if (searchBox.classList.contains('hidden')) {
+            searchBox.classList.remove('hidden');
+            searchBox.focus();
+        } else {
+            searchBox.classList.add('hidden');
+        }
+    }
+
+    // Search Functionality for the View Cases Table
+    const searchInput = document.getElementById("searchInput");
+    const table = document.getElementById("cases-table");
+    const rows = table.getElementsByTagName("tr");
+
+    if (searchInput) {
+        searchInput.addEventListener("keyup", function() {
+            if (!viewCases.classList.contains('hidden')) {  // Ensure View Cases is visible
+                const filter = searchInput.value.toLowerCase();
+                for (let i = 1; i < rows.length; i++) {
+                    const cells = rows[i].getElementsByTagName("td");
+                    let match = false;
+                    for (let j = 0; j < cells.length; j++) {
+                        if (cells[j] && cells[j].textContent.toLowerCase().includes(filter)) {
+                            match = true;
+                            break;
+                        }
+                    }
+                    rows[i].style.display = match ? "" : "none";
+                }
+            }
+        });
+    }
+
+    // Schedule Hearing Logic
+    async function scheduleHearing(event) {
+        event.preventDefault();
+
+        // Retrieve form values
+        const caseId = document.getElementById('case-id').value.trim();
+        const caseName = document.getElementById('case-name').value.trim();
+        const hearingDate = document.getElementById('hearing-date').value;
+        const judgeName = document.getElementById('judge-name').value.trim();
+
+        if (!caseId || !caseName || !hearingDate || !judgeName) {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/cases', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    caseId: caseId,
+                    caseName: caseName,
+                    judge: judgeName,
+                    hearingDate: hearingDate,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Hearing scheduled successfully!');
+                // Clear the form
+                document.getElementById('schedule-hearings').querySelector('form').reset();
+                // Refresh the View Cases table
+                fetchCases();
+                // Optionally, navigate to View Cases
+                showContent('view-cases');
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An unexpected error occurred. Please try again.');
+        }
+    }
+    // Function to fetch and display all cases
+    async function fetchCases() {
+        try {
+            const response = await fetch('/api/cases');
+            const data = await response.json();
+
+            if (response.ok) {
+                const cases = data.cases;
+                const tbody = document.querySelector('#cases-table tbody');
+                tbody.innerHTML = ''; // Clear existing rows
+
+                if (cases.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center">No cases found.</td></tr>';
+                    return;
+                }
+
+                cases.forEach((caseItem) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${escapeHTML(caseItem.case_id)}</td>
+                        <td>${escapeHTML(caseItem.case_name)}</td>
+                        <td>${escapeHTML(caseItem.judge)}</td>
+                        <td>${escapeHTML(caseItem.hearing_date)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An unexpected error occurred while fetching cases.');
+        }
+    }
+
+
+    // Update Credentials Logic
+    function updateCredentials(event) {
+        event.preventDefault();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!username || !password) {
+            alert('Please fill in all fields.');
+            return;
+        }
+
+        // Here, you would typically send the updated credentials to the server
+        // For this example, we'll just display an alert
+        alert(`Username and password updated to:\nUsername: ${escapeHTML(username)}\nPassword: ${escapeHTML(password)}`);
+
+        // Clear the form
+        document.getElementById('profile-settings').querySelector('form').reset();
+    }
+
+    // Initialize by showing the View Cases section
+    document.addEventListener('DOMContentLoaded', () => {
+        showContent('view-cases');
+    });
+</script>
+
+
+</body>
+</html>

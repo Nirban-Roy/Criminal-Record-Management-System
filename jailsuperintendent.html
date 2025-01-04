@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Existing head content -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jail Superintendent Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Removed FontAwesome Script -->
+    <style>
+        :root {
+            --primary-dark: #1c1c28;
+            --secondary-dark: #2a2a38;
+            --accent-dark: linear-gradient(45deg, #00ff87, #00b7ff);
+            --background-dark: linear-gradient(135deg, #141421, #20202e);
+            --sidebar-dark: linear-gradient(135deg, #2a2a38, #1c1c28);
+            --content-dark: linear-gradient(135deg, #242434, #30303f);
+            --message-bg-dark: linear-gradient(135deg, #30303f, #33334d);
+            --input-bg-dark: #1c1c28;
+            --input-border: rgba(0, 255, 135, 0.7);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background: var(--background-dark);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background: var(--sidebar-dark);
+            transition: width 0.3s ease;
+            overflow: hidden;
+            z-index: 20;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.3s, padding 0.3s;
+        }
+
+        .sidebar.collapsed a {
+            justify-content: center;
+            padding: 15px 10px;
+        }
+
+        .sidebar a:hover {
+            background: rgba(0, 255, 135, 0.1);
+        }
+
+        .sidebar a.active {
+            background: var(--accent-dark);
+        }
+
+        .sidebar a svg {
+            margin-right: 15px;
+            transition: margin 0.3s;
+            fill: #fff; /* Ensure SVGs are visible */
+        }
+
+        .sidebar.collapsed a svg {
+            margin-right: 0;
+        }
+
+        .sidebar.collapsed a .menu-text {
+            display: none;
+        }
+
+        /* Move the menu icon inside the sidebar */
+        .menu-icon {
+            position: absolute;
+            left: 10px;
+            top: 20px;
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar.collapsed .menu-icon {
+            transform: rotate(180deg); /* Optional: Rotate icon when collapsed */
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background-color: var(--background-dark);
+            padding: 1rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            height: 60px;
+            transition: left 0.3s ease;
+            z-index: 10;
+        }
+
+        .sidebar.collapsed ~ .navbar {
+            left: 80px;
+        }
+
+        /* Content Styles */
+        .content {
+            margin-left: 250px;
+            padding: 80px 20px 20px 20px; /* Adjusted top padding to account for fixed navbar */
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar.collapsed ~ .content {
+            margin-left: 80px;
+        }
+
+        /* Form Styles */
+        .form-container {
+            background-color: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+        }
+
+        .form-container h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #00ff87;
+            text-align: center;
+        }
+
+        .form-container label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .form-container input, .form-container select, .form-container textarea {
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            background-color: var(--input-bg-dark);
+            color: white;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-container input:focus, .form-container select:focus, .form-container textarea:focus {
+            outline: none;
+            border-color: #00ff87;
+            box-shadow: 0px 0px 10px rgba(0, 255, 135, 0.6);
+        }
+
+        .form-container input[type="submit"], .form-container button {
+            background: var(--accent-dark);
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background 0.3s ease;
+            width: 100%;
+        }
+
+        .form-container input[type="submit"]:hover, .form-container button:hover {
+            background: rgba(0, 183, 255, 0.8);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        table th {
+            background: var(--accent-dark);
+            color: white;
+            text-transform: uppercase;
+            padding: 12px 15px;
+            font-size: 14px;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid rgba(0, 255, 135, 0.7);
+            cursor: pointer;
+        }
+
+        table th:hover {
+            background: rgba(0, 255, 135, 0.3);
+        }
+
+        table td {
+            padding: 12px 15px;
+            color: #fff;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        table tr:hover td {
+            background: rgba(0, 255, 135, 0.05);
+        }
+
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            background: var(--accent-dark);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: rgba(0, 183, 255, 0.8);
+        }
+
+        .pagination button:disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
+
+        /* Message Styles */
+        .message {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .message.error {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--content-dark);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-content h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #00ff87;
+            text-align: center;
+        }
+
+        .modal-content .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .modal-content .report-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-content .report-section h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #00b7ff;
+        }
+
+        .modal-content .report-section p {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .modal-content .back-btn {
+            background: var(--accent-dark);
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background 0.3s ease;
+            width: 100%;
+        }
+
+        .modal-content .back-btn:hover {
+            background: rgba(0, 183, 255, 0.8);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar.collapsed {
+                width: 0;
+            }
+
+            .navbar {
+                left: 80px;
+            }
+
+            .sidebar.collapsed ~ .navbar {
+                left: 0;
+            }
+
+            .content {
+                margin-left: 80px;
+            }
+
+            .sidebar.collapsed ~ .content {
+                margin-left: 0;
+            }
+
+            .form-container, .table-container {
+                padding: 15px;
+            }
+
+            table {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="menu-icon" onclick="toggleSidebar()" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+            <!-- Simple SVG Icon for Menu Toggle -->
+            <svg id="toggleIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <!-- Default Icon: Hamburger Menu -->
+                <path id="menuPath" d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <div class="flex flex-col mt-20">
+            <a href="#" id="register-criminal-link" onclick="showContent('register-criminal')" class="active" aria-current="page">
+                <!-- Inline SVG Icon for Register Criminal -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                </svg>
+                <span class="menu-text">Register Criminal</span>
+            </a>
+            <a href="#" id="record-crime-link" onclick="showContent('record-crime')">
+                <!-- Inline SVG Icon for Record Crime -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                <span class="menu-text">Record Crime</span>
+            </a>
+            <a href="#" id="collect-biometrics-link" onclick="showContent('collect-biometrics')">
+                <!-- Inline SVG Icon for Collect Biometrics -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16.24 7.76l-4.24 4.24"></path>
+                    <path d="M7.76 16.24l-4.24-4.24"></path>
+                    <path d="M16.24 16.24l-4.24-4.24"></path>
+                    <path d="M7.76 7.76l-4.24 4.24"></path>
+                </svg>
+                <span class="menu-text">Collect Biometrics</span>
+            </a>
+            <a href="#" id="search-criminal-link" onclick="showContent('search-criminal')">
+                <!-- Inline SVG Icon for Search Criminal -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <span class="menu-text">Search Criminal</span>
+            </a>
+            <a href="#" id="update-criminal-link" onclick="showContent('update-criminal')">
+                <!-- Inline SVG Icon for Update Criminal -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                <span class="menu-text">Update Criminal</span>
+            </a>
+            <a href="#" id="maintain-location-link" onclick="showContent('maintain-location')">
+                <!-- Inline SVG Icon for Maintain Location -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1118 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span class="menu-text">Maintain Location</span>
+            </a>
+            <a href="#" id="health-records-link" onclick="showContent('health-records')">
+                <!-- Inline SVG Icon for Health Records -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 21v-6"></path>
+                    <path d="M12 3v6"></path>
+                    <path d="M5 12H2"></path>
+                    <path d="M22 12h-3"></path>
+                    <path d="M16.24 7.76l-4.24 4.24"></path>
+                    <path d="M7.76 16.24l-4.24-4.24"></path>
+                    <path d="M16.24 16.24l-4.24-4.24"></path>
+                    <path d="M7.76 7.76l-4.24 4.24"></path>
+                </svg>
+                <span class="menu-text">Health Records</span>
+            </a>
+            <a href="#" id="assign-works-link" onclick="showContent('assign-works')">
+                <!-- Inline SVG Icon for Assign Works -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span class="menu-text">Assign Works</span>
+            </a>
+            <a href="index.html" class="mt-auto" onclick="logout()">
+                <!-- Inline SVG Icon for Logout -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H5a3 3 0 01-3-3V7a3 3 0 013-3h5a3 3 0 013 3v1"></path>
+                </svg>
+                <span class="menu-text">Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <!-- You can add additional navbar content here if needed -->
+    </div>
+
+    <!-- Content Area -->
+    <div class="content" id="content">
+        <!-- Register Criminal Form -->
+        <div class="form-container" id="register-criminal">
+            <h1 class="text-2xl mb-4 text-green-400">Register Criminal</h1>
+            <div id="register-criminal-message" class="message"></div>
+            <form onsubmit="registerCriminal(event)" enctype="multipart/form-data">
+                <label for="criminal_id">Criminal ID:</label>
+                <input type="text" id="criminal_id" name="criminal_id" required placeholder="Enter Criminal ID" aria-required="true">
+
+                <label for="criminal-name">Name:</label>
+                <input type="text" id="criminal-name" name="name" required placeholder="Enter Criminal's Name" aria-required="true">
+
+                <label for="age">Age:</label>
+                <input type="number" id="age" name="age" required placeholder="Enter Age" min="0" aria-required="true">
+
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender" required aria-required="true">
+                    <option value="" disabled selected>Select Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </select>
+
+                <label for="nationality">Nationality:</label>
+                <input type="text" id="nationality" name="nationality" required placeholder="Enter Nationality" aria-required="true">
+
+                <label for="photo">Photo:</label>
+                <input type="file" id="photo" name="photo" accept="image/*">
+
+                <div class="flex justify-center">
+                    <input type="submit" value="Register Criminal">
+                </div>
+            </form>
+        </div>
+
+        <!-- Record Crime Form -->
+        <div class="form-container hidden" id="record-crime">
+            <h1 class="text-2xl mb-4 text-green-400">Record Crime</h1>
+            <div id="record-crime-message" class="message"></div>
+            <form onsubmit="recordCrime(event)">
+                <label for="criminal-id">Criminal ID:</label>
+                <input type="text" id="criminal-id" name="criminal-id" required placeholder="Enter Criminal ID" aria-required="true">
+
+                <label for="crime-type">Crime Type:</label>
+                <input type="text" id="crime-type" name="crime-type" required placeholder="Enter Crime Type" aria-required="true">
+
+                <label for="crime-details">Crime Details:</label>
+                <textarea id="crime-details" name="crime-details" rows="4" required placeholder="Enter Crime Details" aria-required="true"></textarea>
+
+                <label for="crime-date">Crime Date:</label>
+                <input type="date" id="crime-date" name="crime-date" required aria-required="true">
+
+                <div class="flex justify-center">
+                    <input type="submit" value="Record Crime">
+                </div>
+            </form>
+        </div>
+
+        <!-- Collect Biometrics Form -->
+        <div class="form-container hidden" id="collect-biometrics">
+            <h1 class="text-2xl mb-4 text-green-400">Collect Biometrics</h1>
+            <div id="collect-biometrics-message" class="message"></div>
+            <form onsubmit="collectBiometrics(event)" enctype="multipart/form-data">
+                <label for="criminal-id-bio">Criminal ID:</label>
+                <input type="text" id="criminal-id-bio" name="criminal_id" required placeholder="Enter Criminal ID" aria-required="true">
+
+                <label for="photo-front">Photo - Front View:</label>
+                <input type="file" id="photo-front" name="photo_front" accept="image/*" required aria-required="true">
+                <img id="preview-photo-front" class="hidden mt-2 w-32 h-32 object-cover rounded" alt="Photo Front Preview">
+
+                <label for="photo-side">Photo - Side View:</label>
+                <input type="file" id="photo-side" name="photo_side" accept="image/*" required aria-required="true">
+                <img id="preview-photo-side" class="hidden mt-2 w-32 h-32 object-cover rounded" alt="Photo Side Preview">
+
+                <label for="photo-back">Photo - Back View:</label>
+                <input type="file" id="photo-back" name="photo_back" accept="image/*" required aria-required="true">
+                <img id="preview-photo-back" class="hidden mt-2 w-32 h-32 object-cover rounded" alt="Photo Back Preview">
+
+                <label for="blood-group">Blood Group:</label>
+                <input type="text" id="blood-group" name="blood-group" required placeholder="Enter Blood Group" aria-required="true">
+
+                <label for="fingerprint">Fingerprint:</label>
+                <input type="file" id="fingerprint" name="fingerprint" accept="image/*" required aria-required="true">
+                <img id="preview-fingerprint" class="hidden mt-2 w-32 h-32 object-cover rounded" alt="Fingerprint Preview">
+
+                <label for="retina-scan">Retina Scan:</label>
+                <input type="file" id="retina-scan" name="retina-scan" accept="image/*" required aria-required="true">
+                <img id="preview-retina-scan" class="hidden mt-2 w-32 h-32 object-cover rounded" alt="Retina Scan Preview">
+
+                <label for="dna-info">DNA Information:</label>
+                <textarea id="dna-info" name="dna-info" rows="3" required placeholder="Enter DNA Information" aria-required="true"></textarea>
+
+                <div class="flex justify-center">
+                    <input type="submit" value="Collect Biometrics">
+                </div>
+            </form>
+        </div>
+
+        <!-- Search Criminal Form -->
+        <div class="form-container hidden" id="search-criminal">
+            <h1 class="text-2xl mb-4 text-green-400">Search Criminal</h1>
+            <div id="search-criminal-message" class="message"></div>
+            <form onsubmit="searchCriminal(event)">
+                <label for="search-query">Search By:</label>
+                <select id="search-query" name="search-query" required aria-required="true">
+                    <option value="" disabled selected>Select Option</option>
+                    <option value="criminal_id">Criminal ID</option>
+                    <option value="name">Name</option>
+                    <option value="blood_group">Blood Group</option>
+                    <option value="fingerprint">Fingerprint</option>
+                    <option value="retina_scan">Retina Scan</option>
+                    <option value="dna_info">DNA Information</option>
+                </select>
+
+                <label for="search-value">Search Value:</label>
+                <input type="text" id="search-value" name="search-value" required placeholder="Enter search value" aria-required="true">
+
+                <div class="flex justify-center">
+                    <input type="submit" value="Search">
+                </div>
+            </form>
+            <!-- Search Results Table -->
+            <div class="table-container mt-4 hidden" id="search-results">
+                <h2 class="text-xl mb-4 text-green-400">Search Results</h2>
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th>Criminal ID</th>
+                            <th>Name</th>
+                            <th>Blood Group</th>
+                            <th>Fingerprint</th>
+                            <th>Retina Scan</th>
+                            <th>DNA Info</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="search-results-body">
+                        <!-- Dynamic search results will be inserted here -->
+                    </tbody>
+                </table>
+                <div class="pagination" id="search-pagination">
+                    <!-- Pagination buttons will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Criminal Form -->
+        <div class="form-container hidden" id="update-criminal">
+            <h1 class="text-2xl mb-4 text-green-400">Update Criminal Information</h1>
+            <div id="update-criminal-message" class="message"></div>
+            <form onsubmit="updateCriminal(event)">
+                <label for="update-criminal-id">Criminal ID:</label>
+                <input type="text" id="update-criminal-id" name="update-criminal-id" required placeholder="Enter Criminal ID" aria-required="true">
+
+                <label for="new-crime">New Crime:</label>
+                <input type="text" id="new-crime" name="new-crime" required placeholder="Enter New Crime" aria-required="true">
+
+                <label for="crime-details-update">Crime Details:</label>
+                <textarea id="crime-details-update" name="crime-details-update" rows="4" required placeholder="Enter Crime Details" aria-required="true"></textarea>
+
+                <div class="flex justify-center">
+                    <input type="submit" value="Update Crime">
+                </div>
+            </form>
+        </div>
+
+        <!-- Maintain Location Form -->
+        <div class="form-container hidden" id="maintain-location">
+            <h1 class="text-2xl mb-4 text-green-400">Maintain Criminal Location</h1>
+            <div id="maintain-location-message" class="message"></div>
+            <form onsubmit="maintainLocation(event)">
+                <label for="location-criminal-id">Criminal ID:</label>
+                <input type="text" id="location-criminal-id" name="location-criminal-id" required placeholder="Enter Criminal ID" aria-required="true">
+
+                <label for="cell-number">Cell Number:</label>
+                <input type="text" id="cell-number" name="cell-number" required placeholder="Enter Cell Number" aria-required="true">
+
+                <label for="jail-name">Jail Name:</label>
+                <input type="text" id="jail-name" name="jail-name" required placeholder="Enter Jail Name" aria-required="true">
+
+                <div class="flex justify-center">
+                    <input type="submit" value="Update Location">
+                </div>
+            </form>
+        </div>
+
+        <!-- Health Records Form -->
+        <div class="form-container hidden" id="health-records">
+            <h1 class="text-2xl mb-4 text-green-400">Health Records</h1>
+            <div id="record-health-message" class="message"></div>
+            <form onsubmit="recordHealth(event)">
+                <label for="health-criminal-id">Criminal ID:</label>
+                <input type="text" id="health-criminal-id" name="health-criminal-id" required placeholder="Enter Criminal ID" aria-required="true">
+
+                <label for="health-condition">Health Condition:</label>
+                <textarea id="health-condition" name="health-condition" rows="4" required placeholder="Enter Health Condition" aria-required="true"></textarea>
+
+                <div class="flex justify-center">
+                    <input type="submit" value="Record Health Condition">
+                </div>
+            </form>
+        </div>
+
+        <!-- Assign Works Form -->
+        <div class="form-container hidden" id="assign-works">
+            <h1 class="text-2xl mb-4 text-green-400">Assign Works</h1>
+            <div id="assign-works-message" class="message"></div>
+            <form onsubmit="assignWorks(event)">
+                <label for="assign-criminal-id">Criminal ID:</label>
+                <input type="text" id="assign-criminal-id" name="assign-criminal-id" required placeholder="Enter Criminal ID" aria-required="true">
+
+                <label for="work-description">Work Description:</label>
+                <textarea id="work-description" name="work-description" rows="4" required placeholder="Enter Work Description" aria-required="true"></textarea>
+
+                <label for="assign-date">Assign Date:</label>
+                <input type="date" id="assign-date" name="assign-date" required aria-required="true">
+
+                <div class="flex justify-center">
+                    <input type="submit" value="Assign Work">
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal for Criminal Information -->
+        <div class="modal" id="criminal-info-modal">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closeModal()">X</button>
+                <h2>Criminal Details</h2>
+                <!-- Criminal Information Sections -->
+                <div id="criminal-report-content">
+                    <!-- Dynamic content will be inserted here -->
+                </div>
+                <button class="back-btn mt-4" onclick="closeModal()">Back</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const links = document.querySelectorAll('.sidebar a');
+
+        // Sidebar Toggle Logic
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+
+            // Toggle between hamburger and close icon
+            if (sidebar.classList.contains('collapsed')) {
+                // Change to Close (X) Icon
+                toggleIcon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                `;
+            } else {
+                // Change to Hamburger Menu Icon
+                toggleIcon.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                `;
+            }
+        }
+
+        // Function to remove active class from all links
+        function removeActiveClasses() {
+            links.forEach(link => {
+                link.classList.remove('active');
+            });
+        }
+
+        // Show Content Functionality
+        function showContent(section) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content > div');
+            sections.forEach(sec => {
+                sec.classList.add('hidden');
+            });
+
+            // Remove active class from all links
+            removeActiveClasses();
+
+            // Show the selected section
+            const activeSection = document.getElementById(section);
+            if (activeSection) {
+                activeSection.classList.remove('hidden');
+                document.getElementById(`${section}-link`).classList.add('active');
+            }
+
+            // Reset forms or perform other actions if needed
+            if (section === 'search-criminal') {
+                document.getElementById('search-value').value = '';
+                document.getElementById('search-results').classList.add('hidden');
+                document.getElementById('search-results-body').innerHTML = '';
+                document.getElementById('search-pagination').innerHTML = '';
+            } else {
+                // Close modal if open
+                closeModal();
+            }
+        }
+
+        // Initialize by showing the Register Criminal section
+        document.addEventListener('DOMContentLoaded', () => {
+            showContent('register-criminal');
+        });
+
+        // Function to display messages
+        function displayMessage(elementId, message, type) {
+            const messageDiv = document.getElementById(elementId);
+            messageDiv.textContent = message;
+            messageDiv.classList.remove('success', 'error');
+            messageDiv.classList.add(type);
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Function to preview uploaded images
+        function previewImage(inputId, imgId) {
+            const input = document.getElementById(inputId);
+            const img = document.getElementById(imgId);
+
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+
+                    reader.onload = function(e) {
+                        img.src = e.target.result;
+                        img.classList.remove('hidden');
+                    }
+
+                    reader.readAsDataURL(file);
+                } else {
+                    img.src = '';
+                    img.classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize image previews
+        previewImage('photo-front', 'preview-photo-front');
+        previewImage('photo-side', 'preview-photo-side');
+        previewImage('photo-back', 'preview-photo-back');
+        previewImage('fingerprint', 'preview-fingerprint');
+        previewImage('retina-scan', 'preview-retina-scan');
+
+        // Register Criminal Form Submission
+        async function registerCriminal(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            // Display loading state
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.value = 'Registering...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/register-criminal', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayMessage('register-criminal-message', `Criminal "${result.criminal.name}" registered successfully!`, 'success');
+                    form.reset();
+                    // Hide image previews
+                    document.querySelectorAll('#register-criminal img').forEach(img => img.classList.add('hidden'));
+                } else {
+                    displayMessage('register-criminal-message', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('register-criminal-message', 'An unexpected error occurred.', 'error');
+            } finally {
+                // Reset loading state
+                submitButton.value = 'Register Criminal';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Record Crime Form Submission
+        async function recordCrime(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                criminal_id: document.getElementById('criminal-id').value.trim(),
+                crime_type: document.getElementById('crime-type').value.trim(),
+                crime_details: document.getElementById('crime-details').value.trim(),
+                crime_date: document.getElementById('crime-date').value
+            };
+
+            // Display loading state
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.value = 'Recording...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/record-crime', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayMessage('record-crime-message', `Crime recorded for Criminal ID "${result.crime.criminal_id}".`, 'success');
+                    form.reset();
+                } else {
+                    displayMessage('record-crime-message', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('record-crime-message', 'An unexpected error occurred.', 'error');
+            } finally {
+                // Reset loading state
+                submitButton.value = 'Record Crime';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Collect Biometrics Form Submission
+        async function collectBiometrics(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+
+            // Display loading state
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.value = 'Collecting...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/collect-biometrics', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayMessage('collect-biometrics-message', result.message, 'success');
+                    form.reset();
+                    // Hide image previews
+                    document.querySelectorAll('#collect-biometrics img').forEach(img => img.classList.add('hidden'));
+                } else {
+                    displayMessage('collect-biometrics-message', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('collect-biometrics-message', 'An unexpected error occurred.', 'error');
+            } finally {
+                // Reset loading state
+                submitButton.value = 'Collect Biometrics';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Search Criminal Form Submission
+        async function searchCriminal(event) {
+            event.preventDefault();
+            const form = event.target;
+            const searchBy = document.getElementById('search-query').value;
+            const searchValue = document.getElementById('search-value').value.trim();
+            const page = 1; // Initial page
+            const limit = 10; // Items per page
+
+            // Display loading state
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.value = 'Searching...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch(`/api/search-criminal?search_by=${encodeURIComponent(searchBy)}&search_value=${encodeURIComponent(searchValue)}&page=${page}&limit=${limit}`, {
+                    method: 'GET'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    if (result.results.length === 0) {
+                        displayMessage('search-criminal-message', 'No criminal records found.', 'error');
+                        document.getElementById('search-results').classList.add('hidden');
+                    } else {
+                        populateSearchResults(result.results);
+                        setupPagination(result.pagination, searchBy, searchValue);
+                        document.getElementById('search-results').classList.remove('hidden');
+                        displayMessage('search-criminal-message', `${result.results.length} record(s) found.`, 'success');
+                    }
+                } else {
+                    displayMessage('search-criminal-message', `Error: ${result.error}`, 'error');
+                    document.getElementById('search-results').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('search-criminal-message', 'An unexpected error occurred.', 'error');
+                document.getElementById('search-results').classList.add('hidden');
+            } finally {
+                // Reset loading state
+                submitButton.value = 'Search';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Function to populate search results table
+        function populateSearchResults(results) {
+            const tbody = document.getElementById('search-results-body');
+            tbody.innerHTML = '';
+
+            results.forEach(criminal => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${criminal.criminal_id}</td>
+                        <td>${criminal.name}</td>
+                        <td>${criminal.blood_group || 'N/A'}</td>
+                        <td>${criminal.fingerprint || 'N/A'}</td>
+                        <td>${criminal.retina_scan || 'N/A'}</td>
+                        <td>${criminal.dna_info || 'N/A'}</td>
+                        <td>
+                            <button class="bg-blue-500 px-2 py-1 rounded" onclick="viewCriminal('${criminal.criminal_id}')">View</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Function to setup pagination
+        function setupPagination(pagination, searchBy, searchValue) {
+            const paginationDiv = document.getElementById('search-pagination');
+            paginationDiv.innerHTML = '';
+
+            const { total, page, limit, pages } = pagination;
+
+            // Previous Button
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Prev';
+            prevButton.disabled = page <= 1;
+            prevButton.onclick = () => fetchSearchResults(searchBy, searchValue, page - 1, limit);
+            paginationDiv.appendChild(prevButton);
+
+            // Page Numbers
+            for (let i = 1; i <= pages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.disabled = i === page;
+                pageButton.onclick = () => fetchSearchResults(searchBy, searchValue, i, limit);
+                paginationDiv.appendChild(pageButton);
+            }
+
+            // Next Button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next';
+            nextButton.disabled = page >= pages;
+            nextButton.onclick = () => fetchSearchResults(searchBy, searchValue, page + 1, limit);
+            paginationDiv.appendChild(nextButton);
+        }
+
+        // Function to fetch search results for a specific page
+        async function fetchSearchResults(searchBy, searchValue, page, limit) {
+            // Display loading state
+            const searchResults = document.getElementById('search-results');
+            const tbody = document.getElementById('search-results-body');
+            const paginationDiv = document.getElementById('search-pagination');
+            tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+            paginationDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`/api/search-criminal?search_by=${encodeURIComponent(searchBy)}&search_value=${encodeURIComponent(searchValue)}&page=${page}&limit=${limit}`, {
+                    method: 'GET'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    if (result.results.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7">No criminal records found.</td></tr>';
+                        paginationDiv.innerHTML = '';
+                    } else {
+                        populateSearchResults(result.results);
+                        setupPagination(result.pagination, searchBy, searchValue);
+                    }
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7">Error fetching results.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                tbody.innerHTML = '<tr><td colspan="7">An unexpected error occurred.</td></tr>';
+                paginationDiv.innerHTML = '';
+            }
+        }
+
+        // Function to view criminal details (modified to show modal)
+        function viewCriminal(criminalId) {
+            // Fetch and display criminal information in modal
+            fetch(`/api/criminal-info/${encodeURIComponent(criminalId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    const modal = document.getElementById('criminal-info-modal');
+                    const reportContent = document.getElementById('criminal-report-content');
+
+                    // Clear previous content
+                    reportContent.innerHTML = '';
+
+                    // Basic Information Section
+                    const basicInfo = data.basicInfo;
+                    const basicInfoSection = document.createElement('div');
+                    basicInfoSection.classList.add('report-section');
+                    basicInfoSection.innerHTML = `
+                        <h3>Basic Information</h3>
+                        <p><strong>Criminal ID:</strong> ${basicInfo.criminal_id}</p>
+                        <p><strong>Name:</strong> ${basicInfo.name}</p>
+                        <p><strong>Age:</strong> ${basicInfo.age}</p>
+                        <p><strong>Gender:</strong> ${basicInfo.gender}</p>
+                        <p><strong>Nationality:</strong> ${basicInfo.nationality}</p>
+                    `;
+                    reportContent.appendChild(basicInfoSection);
+
+                    // Biometrics Section
+                    const biometrics = data.biometrics;
+                    if (biometrics) {
+                        const biometricsSection = document.createElement('div');
+                        biometricsSection.classList.add('report-section');
+                        biometricsSection.innerHTML = `
+                            <h3>Biometrics</h3>
+                            <p><strong>Blood Group:</strong> ${biometrics.blood_group}</p>
+                            <p><strong>DNA Info:</strong> ${biometrics.dna_info}</p>
+                            <!-- Add other biometrics as needed -->
+                        `;
+                        reportContent.appendChild(biometricsSection);
+                    }
+
+                    // Crimes Section
+                    const crimes = data.crimes;
+                    if (crimes.length > 0) {
+                        const crimesSection = document.createElement('div');
+                        crimesSection.classList.add('report-section');
+                        crimesSection.innerHTML = `<h3>Crimes</h3>`;
+                        crimes.forEach(crime => {
+                            const crimeInfo = document.createElement('p');
+                            crimeInfo.innerHTML = `<strong>Type:</strong> ${crime.crime_type}, <strong>Details:</strong> ${crime.crime_details}, <strong>Date:</strong> ${crime.crime_date}`;
+                            crimesSection.appendChild(crimeInfo);
+                        });
+                        reportContent.appendChild(crimesSection);
+                    }
+
+                    // Health Records Section
+                    const health = data.health;
+                    if (health) {
+                        const healthSection = document.createElement('div');
+                        healthSection.classList.add('report-section');
+                        healthSection.innerHTML = `
+                            <h3>Health Records</h3>
+                            <p><strong>Health Condition:</strong> ${health.health_condition}</p>
+                        `;
+                        reportContent.appendChild(healthSection);
+                    }
+
+                    // Assign Works Section
+                    const works = data.works;
+                    if (works.length > 0) {
+                        const worksSection = document.createElement('div');
+                        worksSection.classList.add('report-section');
+                        worksSection.innerHTML = `<h3>Assigned Works</h3>`;
+                        works.forEach(work => {
+                            const workInfo = document.createElement('p');
+                            workInfo.innerHTML = `<strong>Description:</strong> ${work.work_description}, <strong>Date:</strong> ${work.assign_date}`;
+                            worksSection.appendChild(workInfo);
+                        });
+                        reportContent.appendChild(worksSection);
+                    }
+
+                    // Show Modal
+                    modal.classList.add('active');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while fetching criminal information.');
+                });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('criminal-info-modal');
+            modal.classList.remove('active');
+        }
+
+        // Update Criminal Form Submission
+        async function updateCriminal(event) {
+            event.preventDefault();
+            const form = event.target;
+            const criminalId = document.getElementById('update-criminal-id').value.trim();
+            const newCrime = document.getElementById('new-crime').value.trim();
+            const crimeDetails = document.getElementById('crime-details-update').value.trim();
+
+            const data = {
+                criminal_id: criminalId,
+                crime_type: newCrime,
+                crime_details: crimeDetails,
+                crime_date: new Date().toISOString().split('T')[0] // Assuming current date
+            };
+
+            // Display loading state
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.value = 'Updating...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/record-crime', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayMessage('update-criminal-message', `Crime details updated for Criminal ID "${result.crime.criminal_id}".`, 'success');
+                    form.reset();
+                } else {
+                    displayMessage('update-criminal-message', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('update-criminal-message', 'An unexpected error occurred.', 'error');
+            } finally {
+                // Reset loading state
+                submitButton.value = 'Update Crime';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Maintain Location Form Submission
+        async function maintainLocation(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                criminal_id: document.getElementById('location-criminal-id').value.trim(),
+                cell_number: document.getElementById('cell-number').value.trim(),
+                jail_name: document.getElementById('jail-name').value.trim()
+            };
+
+            // Display loading state
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.value = 'Updating...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/maintain-location', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayMessage('maintain-location-message', result.message, 'success');
+                    form.reset();
+                } else {
+                    displayMessage('maintain-location-message', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('maintain-location-message', 'An unexpected error occurred.', 'error');
+            } finally {
+                // Reset loading state
+                submitButton.value = 'Update Location';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Record Health Form Submission
+        async function recordHealth(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                criminal_id: document.getElementById('health-criminal-id').value.trim(),
+                health_condition: document.getElementById('health-condition').value.trim()
+            };
+
+            // Display loading state
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.value = 'Recording...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/record-health', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayMessage('record-health-message', result.message, 'success');
+                    form.reset();
+                } else {
+                    displayMessage('record-health-message', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('record-health-message', 'An unexpected error occurred.', 'error');
+            } finally {
+                // Reset loading state
+                submitButton.value = 'Record Health Condition';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Assign Works Form Submission
+        async function assignWorks(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = {
+                criminal_id: document.getElementById('assign-criminal-id').value.trim(),
+                work_description: document.getElementById('work-description').value.trim(),
+                assign_date: document.getElementById('assign-date').value
+            };
+
+            // Display loading state
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.value = 'Assigning...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/assign-works', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayMessage('assign-works-message', result.message, 'success');
+                    form.reset();
+                } else {
+                    displayMessage('assign-works-message', `Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayMessage('assign-works-message', 'An unexpected error occurred.', 'error');
+            } finally {
+                // Reset loading state
+                submitButton.value = 'Assign Work';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Function to logout (can be enhanced to clear session/token)
+        function logout() {
+            // For now, simply reload the page or redirect to login
+            alert('You have been logged out.');
+            window.location.href = 'index.html'; // Change to login page if available
+        }
+    </script>
+</body>
+</html>
